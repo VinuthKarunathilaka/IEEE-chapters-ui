@@ -629,15 +629,23 @@ export default function TextSphereAnimation() {
 
         document.body.style.cursor = 'pointer';
         window.addEventListener('click', () => {
-          if (tl.reversed()) {
-            tl.reversed(false);
-            TweenMax.to(idleSpeed, 1.5, { value: 0, ease: Power1.easeOut });
-          } else {
+  if (tl.reversed()) {
+          tl.reversed(false);
+          TweenMax.to(idleSpeed, 1.5, { value: 0, ease: Power1.easeOut });
+        } else {
+          // Immediately fade out subText
+          if (subText) {
+            TweenMax.to(subText, 0.3, { opacity: 0, ease: Power1.easeOut });
+          }
+          // 400ms delay, then start the main reverse
+          setTimeout(() => {
+            tl.time(4.5);
             tl.reversed(true);
             const durationLeft = Math.max(tl.time(), 0.1);
             TweenMax.to(idleSpeed, durationLeft, { value: 0.003, ease: Power1.easeIn });
-          }
-        });
+          }, 300);
+        }
+      });
       }
     };
 
