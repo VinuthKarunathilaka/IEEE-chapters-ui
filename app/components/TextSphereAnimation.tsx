@@ -565,6 +565,7 @@ export default function TextSphereAnimation() {
         const bgGlobe = document.getElementById('bg-globe');
         const bgText = document.getElementById('bg-text');
         const subText = document.getElementById('sub-text');
+        const bgSlideshow = document.getElementById('bg-slideshow');
 
         tl.fromTo(
           sphereGroup.rotation,
@@ -607,6 +608,10 @@ export default function TextSphereAnimation() {
           tl.fromTo(bgText, 3, { opacity: 0 }, { opacity: 1, ease: Power1.easeInOut }, 1.5);
         }
 
+        if (bgSlideshow) {
+          tl.fromTo(bgSlideshow, 3, { opacity: 0 }, { opacity: 1, ease: Power1.easeInOut }, 1.5);
+        }
+
         if (subText) {
           tl.fromTo(subText, 2, { opacity: 0 }, { opacity: 1, ease: Power1.easeInOut }, 4.5);
         }
@@ -619,6 +624,7 @@ export default function TextSphereAnimation() {
           if (bgGlobe) bgGlobe.style.opacity = '1';
           if (bgText) bgText.style.opacity = '0';
           if (subText) subText.style.opacity = '0';
+          if (bgSlideshow) bgSlideshow.style.opacity = '0';
         });
 
         document.body.style.cursor = 'pointer';
@@ -649,6 +655,29 @@ export default function TextSphereAnimation() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700;800&display=swap');
         
+        @keyframes crossfade-bg {
+          0% { opacity: 0; }
+          10% { opacity: 0.4; }
+          25% { opacity: 0.4; }
+          35% { opacity: 0; }
+          100% { opacity: 0; }
+        }
+        
+        .slideshow-img {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          opacity: 0;
+          animation: crossfade-bg 24s infinite;
+        }
+        
+        .slide-1 { animation-delay: 0s; }
+        .slide-2 { animation-delay: 6s; }
+        .slide-3 { animation-delay: 12s; }
+        .slide-4 { animation-delay: 18s; }
+
         @keyframes circuit-pulse {
           0% { stroke-dashoffset: 120; opacity: 0; }
           1% { opacity: 1; }
@@ -666,6 +695,15 @@ export default function TextSphereAnimation() {
           font-family: 'JetBrains Mono', monospace;
         }
       `}</style>
+
+      {/* --- SLIDESHOW BACKGROUND --- */}
+      <div id="bg-slideshow" className="absolute inset-0 z-0 opacity-0 pointer-events-none">
+        <div className="absolute inset-0 bg-[#000408]/50 z-10" />
+        <img src="/1.jpeg" alt="Slide 1" className="slideshow-img slide-1" />
+        <img src="/2.jpeg" alt="Slide 2" className="slideshow-img slide-2" />
+        <img src="/3.jpeg" alt="Slide 3" className="slideshow-img slide-3" />
+        <img src="/4.jpeg" alt="Slide 4" className="slideshow-img slide-4" />
+      </div>
 
       {/* --- GLOBE BACKGROUND --- */}
       <div id="bg-globe" className="absolute inset-0 pointer-events-none opacity-100 z-0">
