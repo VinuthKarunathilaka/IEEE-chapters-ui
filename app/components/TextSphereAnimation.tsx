@@ -1,40 +1,66 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function TextSphereAnimation() {
   const containerRef = useRef<HTMLDivElement>(null);
   const initialized = useRef(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
 
-    const scripts = [
-      'https://cdnjs.cloudflare.com/ajax/libs/three.js/r75/three.min.js',
-      'https://s3-us-west-2.amazonaws.com/s.cdpn.io/175711/TextGeometry.js',
-      'https://s3-us-west-2.amazonaws.com/s.cdpn.io/175711/FontUtils.js',
-      'https://s3-us-west-2.amazonaws.com/s.cdpn.io/175711/pnltri.min.js',
-      'https://s3-us-west-2.amazonaws.com/s.cdpn.io/175711/droid_sans_bold.typeface.js',
-      'https://cdnjs.cloudflare.com/ajax/libs/gsap/1.18.0/TweenMax.min.js',
-      'https://s3-us-west-2.amazonaws.com/s.cdpn.io/175711/bas.js',
-    ];
+    // Preload earth texture image from local assets
+    const earthImage = new Image();
+    earthImage.src = '/earth_specular_2048.jpg';
 
     const loadScript = (src: string): Promise<void> => {
       return new Promise((resolve, reject) => {
+        // Check if script is already loaded
+        if (document.querySelector(`script[src="${src}"]`)) {
+          resolve();
+          return;
+        }
         const script = document.createElement('script');
         script.src = src;
         script.onload = () => resolve();
         script.onerror = reject;
-        document.body.appendChild(script);
+        document.head.appendChild(script);
       });
     };
 
     const loadAllScripts = async () => {
-      for (const src of scripts) {
-        await loadScript(src);
+      try {
+        // Load THREE.js first (required by other scripts)
+        await loadScript('/lib/three.min.js');
+
+        // Then load scripts that depend on THREE in parallel
+        await Promise.all([
+          loadScript('/lib/TextGeometry.js'),
+          loadScript('/lib/FontUtils.js'),
+          loadScript('/lib/pnltri.min.js'),
+          loadScript('/lib/droid_sans_bold.typeface.js'),
+          loadScript('/lib/TweenMax.min.js'),
+        ]);
+
+        // Finally load bas.js which depends on THREE and other libraries
+        await loadScript('/lib/bas.js');
+
+        // Wait for earth image to load
+        await new Promise((resolve) => {
+          if (earthImage.complete) {
+            resolve(null);
+          } else {
+            earthImage.onload = () => resolve(null);
+          }
+        });
+        setIsLoading(false);
+        initAnimation();
+      } catch (error) {
+        console.error('Failed to load resources:', error);
+        setIsLoading(false);
       }
-      initAnimation();
     };
 
     const initAnimation = () => {
@@ -486,10 +512,9 @@ export default function TextSphereAnimation() {
       ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      // Use the preloaded earth image
+      const processEarthTexture = () => {
+        ctx.drawImage(earthImage, 0, 0, canvas.width, canvas.height);
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
         ctx.fillStyle = '#060e1a';
@@ -519,8 +544,7 @@ export default function TextSphereAnimation() {
         initScene(earthTexture);
       };
 
-      img.src =
-        'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_specular_2048.jpg';
+      processEarthTexture();
 
       function initScene(earthTexture: any) {
         const root = new (THREERoot as any)({
@@ -660,6 +684,21 @@ export default function TextSphereAnimation() {
 
   return (
     <div className="relative w-full h-screen bg-[#000408] overflow-hidden">
+      {/* Loading Indicator */}
+      {isLoading && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-[#000408]">
+          <div className="text-center">
+            <div className="relative w-20 h-20 mx-auto mb-6">
+              <div className="absolute inset-0 border-4 border-blue-500/20 rounded-full"></div>
+              <div className="absolute inset-0 border-4 border-transparent border-t-blue-500 rounded-full animate-spin"></div>
+            </div>
+            <p className="text-blue-300/80 text-sm font-jetbrains tracking-[0.3em] animate-pulse">
+              LOADING GLOBE
+            </p>
+          </div>
+        </div>
+      )}
+
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700;800&display=swap');
         
