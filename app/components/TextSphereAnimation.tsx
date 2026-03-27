@@ -699,6 +699,11 @@ export default function TextSphereAnimation() {
           animation: circuit-pulse 40s linear infinite both;
         }
 
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
         .font-jetbrains {
           font-family: 'JetBrains Mono', monospace;
         }
@@ -825,6 +830,18 @@ export default function TextSphereAnimation() {
         <p className="text-sm md:text-base text-gray-400 tracking-[0.4em] font-light">
           TO TRANSFORM BEYOND EXCELLENCE.
         </p>
+      </div>
+
+      {/* --- LEFT VERTICAL LABEL --- */}
+      <div className="absolute left-6 md:left-12 top-1/2 -translate-y-1/2 z-40 flex flex-col items-center gap-6 opacity-0 animate-[fadeIn_2s_ease-out_3s_forwards]">
+        <div className="w-px h-16 md:h-32 bg-gradient-to-b from-transparent to-blue-400/50" />
+        <p
+          className="text-blue-300/60 text-xs font-jetbrains tracking-[0.4em] uppercase"
+          style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+        >
+          Since 2008
+        </p>
+        <div className="w-px h-16 md:h-32 bg-gradient-to-t from-transparent to-blue-400/50" />
       </div>
 
       {/* Global Vignette */}
