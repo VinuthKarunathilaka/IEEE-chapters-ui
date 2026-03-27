@@ -282,6 +282,66 @@ export default function TextSphereAnimation() {
         return new (TextAnimation as any)(ieeeGeometry);
       }
 
+      // --- Helper: Create a text label sprite ---
+      function createLabelSprite(text: string) {
+        const labelCanvas = document.createElement('canvas');
+        const labelCtx = labelCanvas.getContext('2d')!;
+
+        const fontSize = 48;
+        const paddingX = 28;
+        const paddingY = 18;
+        const font = `bold ${fontSize}px Arial, sans-serif`;
+
+        labelCtx.font = font;
+        const textWidth = labelCtx.measureText(text).width;
+
+        labelCanvas.width = textWidth + paddingX * 2;
+        labelCanvas.height = fontSize + paddingY * 2;
+
+        const cornerRadius = 14;
+        const w = labelCanvas.width;
+        const h = labelCanvas.height;
+
+        labelCtx.fillStyle = 'rgba(6, 14, 26, 0.8)';
+        labelCtx.strokeStyle = 'rgba(96, 165, 250, 0.7)';
+        labelCtx.lineWidth = 3;
+
+        labelCtx.beginPath();
+        labelCtx.moveTo(cornerRadius, 0);
+        labelCtx.lineTo(w - cornerRadius, 0);
+        labelCtx.quadraticCurveTo(w, 0, w, cornerRadius);
+        labelCtx.lineTo(w, h - cornerRadius);
+        labelCtx.quadraticCurveTo(w, h, w - cornerRadius, h);
+        labelCtx.lineTo(cornerRadius, h);
+        labelCtx.quadraticCurveTo(0, h, 0, h - cornerRadius);
+        labelCtx.lineTo(0, cornerRadius);
+        labelCtx.quadraticCurveTo(0, 0, cornerRadius, 0);
+        labelCtx.closePath();
+        labelCtx.fill();
+        labelCtx.stroke();
+
+        labelCtx.font = font;
+        labelCtx.fillStyle = '#ffffff';
+        labelCtx.textAlign = 'center';
+        labelCtx.textBaseline = 'middle';
+        labelCtx.fillText(text, w / 2, h / 2);
+
+        const texture = new THREE.Texture(labelCanvas);
+        texture.needsUpdate = true;
+
+        const spriteMaterial = new THREE.SpriteMaterial({
+          map: texture,
+          transparent: true,
+        });
+
+        const sprite = new THREE.Sprite(spriteMaterial);
+
+        const scaleFactor = 0.14;
+        sprite.scale.set(w * scaleFactor, h * scaleFactor, 1);
+
+        return { sprite, material: spriteMaterial };
+      }
+
       function createEarthSphere(earthTexture: any) {
         const THREE = (window as any).THREE;
         const geometry = new THREE.SphereGeometry(SPHERE_RADIUS * 0.99, 64, 64);
@@ -297,17 +357,9 @@ export default function TextSphereAnimation() {
         earth.visible = true;
         earth.renderOrder = -1;
 
-        // --- FIXED: Correct lat/lon to Three.js SphereGeometry 3D position ---
-        // Three.js SphereGeometry vertex formula uses:
-        //   phi (azimuthal) = u * 2PI, where u = (lon + 180) / 360
-        //   theta (polar)   = v * PI,  where v = (90 - lat) / 180
-        //
-        //   x = -R * cos(phi) * sin(theta)
-        //   y =  R * cos(theta)
-        //   z =  R * sin(phi) * sin(theta)
         const calcPos = (lat: number, lon: number, radius: number) => {
-          const phi = (lon + 180) * (Math.PI / 180);     // azimuthal angle from longitude
-          const theta = (90 - lat) * (Math.PI / 180);    // polar angle from latitude
+          const phi = (lon + 180) * (Math.PI / 180);
+          const theta = (90 - lat) * (Math.PI / 180);
 
           const x = -radius * Math.cos(phi) * Math.sin(theta);
           const y = radius * Math.cos(theta);
@@ -351,6 +403,8 @@ export default function TextSphereAnimation() {
           { name: 'India', lat: 20.6, lon: 78.9 },
         ];
 
+        const extraMaterials: any[] = [];
+
         pinsData.forEach((pin) => {
           const pinModelGroup = create3DPinMesh(pinMaterial);
           const pos = calcPos(pin.lat, pin.lon, SPHERE_RADIUS * 1.01);
@@ -361,9 +415,65 @@ export default function TextSphereAnimation() {
             new THREE.Vector3(0, 1, 0),
             new THREE.Vector3().copy(pos).normalize()
           );
+
+          // --- Label above Sri Lanka pin (in earth's coordinate space) ---
+          if (pin.name === 'Sri Lanka') {
+            const spikeHeight = 15;
+            const topSphereRadius = 3.5;
+
+            // Pin top position in earth's local space
+            const normal = new THREE.Vector3(pos.x, pos.y, pos.z).normalize();
+            const pinTopPos = new THREE.Vector3(
+              pos.x + normal.x * (spikeHeight + topSphereRadius),
+              pos.y + normal.y * (spikeHeight + topSphereRadius),
+              pos.z + normal.z * (spikeHeight + topSphereRadius)
+            );
+
+            // Label position: offset outward (radial) + upward (world Y)
+            const radialOffset = 25;
+            const worldYOffset = 40;
+
+            const labelPos = new THREE.Vector3(
+              pinTopPos.x + normal.x * radialOffset,
+              pinTopPos.y + normal.y * radialOffset + worldYOffset,
+              pinTopPos.z + normal.z * radialOffset
+            );
+
+            // Connector line from pin top to label
+            const lineGeom = new THREE.Geometry();
+            lineGeom.vertices.push(pinTopPos.clone());
+            lineGeom.vertices.push(labelPos.clone());
+            const lineMat = new THREE.LineBasicMaterial({
+              color: 0x60a5fa,
+              transparent: true,
+              opacity: 0.6,
+              linewidth: 1,
+            });
+            const connectorLine = new THREE.Line(lineGeom, lineMat);
+            earth.add(connectorLine);
+            extraMaterials.push(lineMat);
+
+            // Small dot at the bend / connection point on pin top
+            const dotGeom = new THREE.SphereGeometry(1.5, 8, 8);
+            const dotMat = new THREE.MeshBasicMaterial({
+              color: 0x60a5fa,
+              transparent: true,
+            });
+            const dot = new THREE.Mesh(dotGeom, dotMat);
+            dot.position.copy(pinTopPos);
+            earth.add(dot);
+            extraMaterials.push(dotMat);
+
+            // Label sprite
+            const { sprite: labelSprite, material: labelMat } =
+              createLabelSprite('UoM Student Branch');
+            labelSprite.position.copy(labelPos);
+            earth.add(labelSprite);
+            extraMaterials.push(labelMat);
+          }
         });
 
-        (earth as any).pinMaterials = [pinMaterial];
+        (earth as any).pinMaterials = [pinMaterial, ...extraMaterials];
 
         return earth;
       }
