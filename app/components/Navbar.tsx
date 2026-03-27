@@ -42,7 +42,7 @@ export default function Navbar() {
               className="relative flex items-center hover:scale-105 active:scale-95 transition-transform"
             >
               <Image
-                  src="/logo/ieeesblogo.png"
+                  src="/logo/ieeesblogo.svg"
                 alt="IEEE SB Logo"
                 width={200}
                 height={200}

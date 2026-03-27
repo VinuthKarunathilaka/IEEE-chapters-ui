@@ -16,6 +16,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "IEEE Student Branch - University of Moratuwa",
   description: "Official website of IEEE Student Branch, University of Moratuwa. Empowering future engineers through innovation and collaboration.",
+  icons: {
+    icon: "/favicon.png",
+  },
 };
 
 export default function RootLayout({
