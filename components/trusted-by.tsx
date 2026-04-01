@@ -13,8 +13,8 @@ import { Facebook, Instagram, Youtube, Globe } from "lucide-react";
 
 const HEX_W = 160;
 const HEX_H = Math.round(HEX_W * 1.1547); // ≈ 185
-const HEX_GAP_X = 28;    // wide horizontal gap
-const HEX_OVERLAP_Y = 10; // minimal overlap so social icons have ~40px clear space below each hex
+const HEX_GAP_X = 40;    // wide horizontal gap
+const HEX_OVERLAP_Y = -20; // negative = positive gap between rows
 
 const socialColorMap: Record<string, string> = {
   facebook: "#1877F2",
