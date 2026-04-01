@@ -1,6 +1,7 @@
 import { Header } from "@/components/header"
 import { BentoGrid } from "@/components/bento-grid"
 import { SectionHeader } from "@/components/section-header"
+import { TrustedBy } from "@/components/trusted-by"
 import { branches } from "@/lib/branches-data"
 import { ArrowRight, Users, Globe2, Lightbulb } from "lucide-react"
 
@@ -51,6 +52,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Trusted By Section (Premium Animated Logo Grid) */}
+      <TrustedBy />
 
       {/* Stats Section */}
       <section className="py-12 px-4 sm:px-6 lg:px-8 border-y border-border bg-card/50">
